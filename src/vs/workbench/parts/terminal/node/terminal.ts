@@ -10,7 +10,7 @@ import { readFile, fileExists } from 'vs/base/node/pfs';
 import { Event } from 'vs/base/common/event';
 
 /**
- * An interface representing a raw terminal child process, this is a subset of the
+ * An interface representing a raw terminal child process, this contains a subset of the
  * child_process.ChildProcess node.js interface.
  */
 export interface ITerminalChildProcess {
@@ -28,6 +28,9 @@ export interface ITerminalChildProcess {
 	shutdown(immediate: boolean): void;
 	input(data: string): void;
 	resize(cols: number, rows: number): void;
+
+	getInitialCwd(): Promise<string>;
+	getCwd(): Promise<string>;
 }
 
 export function getDefaultShell(p: platform.Platform): string {
@@ -55,6 +58,9 @@ function getTerminalDefaultShellUnixLike(): string {
 			if (unixLikeTerminal === '/bin/false') {
 				unixLikeTerminal = '/bin/bash';
 			}
+		}
+		if (platform.isWindows) {
+			unixLikeTerminal = '/bin/bash'; // for WSL
 		}
 		_TERMINAL_DEFAULT_SHELL_UNIX_LIKE = unixLikeTerminal;
 	}

@@ -45,8 +45,7 @@ export class OutputLinkComputer {
 
 	private getModel(uri: string): IMirrorModel | null {
 		const models = this.ctx.getMirrorModels();
-		for (let i = 0; i < models.length; i++) {
-			const model = models[i];
+		for (const model of models) {
 			if (model.uri.toString() === uri) {
 				return model;
 			}
@@ -55,10 +54,10 @@ export class OutputLinkComputer {
 		return null;
 	}
 
-	public computeLinks(uri: string): Promise<ILink[]> | undefined {
+	public computeLinks(uri: string): Promise<ILink[]> {
 		const model = this.getModel(uri);
 		if (!model) {
-			return void 0;
+			return Promise.resolve([]);
 		}
 
 		const links: ILink[] = [];

@@ -99,6 +99,7 @@ export function extractEditor(options: tss.ITreeShakingOptions & { destRoot: str
 		}
 	}
 
+	delete tsConfig.compilerOptions.moduleResolution;
 	writeOutputFile('tsconfig.json', JSON.stringify(tsConfig, null, '\t'));
 
 	[
@@ -138,8 +139,7 @@ export function createESMSourcesAndResources2(options: IOptions2): void {
 	};
 
 	const allFiles = walkDirRecursive(SRC_FOLDER);
-	for (let i = 0; i < allFiles.length; i++) {
-		const file = allFiles[i];
+	for (const file of allFiles) {
 
 		if (options.ignores.indexOf(file.replace(/\\/g, '/')) >= 0) {
 			continue;
@@ -148,7 +148,7 @@ export function createESMSourcesAndResources2(options: IOptions2): void {
 		if (file === 'tsconfig.json') {
 			const tsConfig = JSON.parse(fs.readFileSync(path.join(SRC_FOLDER, file)).toString());
 			tsConfig.compilerOptions.module = 'es6';
-			tsConfig.compilerOptions.outDir = path.join(path.relative(OUT_FOLDER, OUT_RESOURCES_FOLDER), 'vs');
+			tsConfig.compilerOptions.outDir = path.join(path.relative(OUT_FOLDER, OUT_RESOURCES_FOLDER), 'vs').replace(/\\/g, '/');
 			write(getDestAbsoluteFilePath(file), JSON.stringify(tsConfig, null, '\t'));
 			continue;
 		}
@@ -181,13 +181,14 @@ export function createESMSourcesAndResources2(options: IOptions2): void {
 				}
 
 				let relativePath: string;
-				if (importedFilepath === path.dirname(file)) {
+				if (importedFilepath === path.dirname(file).replace(/\\/g, '/')) {
 					relativePath = '../' + path.basename(path.dirname(file));
-				} else if (importedFilepath === path.dirname(path.dirname(file))) {
+				} else if (importedFilepath === path.dirname(path.dirname(file)).replace(/\\/g, '/')) {
 					relativePath = '../../' + path.basename(path.dirname(path.dirname(file)));
 				} else {
 					relativePath = path.relative(path.dirname(file), importedFilepath);
 				}
+				relativePath = relativePath.replace(/\\/g, '/');
 				if (!/(^\.\/)|(^\.\.\/)/.test(relativePath)) {
 					relativePath = './' + relativePath;
 				}
@@ -242,7 +243,6 @@ export function createESMSourcesAndResources2(options: IOptions2): void {
 			let mode = 0;
 			for (let i = 0; i < lines.length; i++) {
 				const line = lines[i];
-
 				if (mode === 0) {
 					if (/\/\/ ESM-comment-begin/.test(line)) {
 						mode = 1;

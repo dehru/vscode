@@ -50,7 +50,7 @@ export class ResourceEncodings extends Disposable implements IResourceEncodings 
 	}
 
 	getReadEncoding(resource: uri, options: IResolveContentOptions, detected: encoding.IDetectedEncodingResult): string {
-		let preferredEncoding: string;
+		let preferredEncoding: string | undefined;
 
 		// Encoding passed in as option
 		if (options && options.encoding) {
@@ -118,10 +118,9 @@ export class ResourceEncodings extends Disposable implements IResourceEncodings 
 		return encodingOverride;
 	}
 
-	private getEncodingOverride(resource: uri): string {
+	private getEncodingOverride(resource: uri): string | null {
 		if (resource && this.encodingOverride && this.encodingOverride.length) {
-			for (let i = 0; i < this.encodingOverride.length; i++) {
-				const override = this.encodingOverride[i];
+			for (const override of this.encodingOverride) {
 
 				// check if the resource is child of encoding override path
 				if (override.parent && isParent(resource.fsPath, override.parent.fsPath, !isLinux /* ignorecase */)) {

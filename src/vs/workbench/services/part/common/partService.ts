@@ -56,9 +56,10 @@ export interface IPartService {
 	onEditorLayout: Event<IDimension>;
 
 	/**
-	 * Asks the part service to if all parts have been created.
+	 * Asks the part service if all parts have been fully restored. For editor part
+	 * this means that the contents of editors have loaded.
 	 */
-	isCreated(): boolean;
+	isRestored(): boolean;
 
 	/**
 	 * Returns whether the given part has the keyboard focus or not.
@@ -84,6 +85,12 @@ export interface IPartService {
 	 * Number of pixels (adjusted for zooming) that the title bar (if visible) pushes down the workbench contents.
 	 */
 	getTitleBarOffset(): number;
+
+	/**
+	 *
+	 * Set editor area hidden or not
+	 */
+	setEditorHidden(hidden: boolean): void;
 
 	/**
 	 * Set sidebar hidden or not

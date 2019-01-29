@@ -14,7 +14,7 @@ export function getComparisonKey(resource: URI): string {
 	return hasToIgnoreCase(resource) ? resource.toString().toLowerCase() : resource.toString();
 }
 
-export function hasToIgnoreCase(resource: URI): boolean {
+export function hasToIgnoreCase(resource: URI | undefined): boolean {
 	// A file scheme resource is in the same platform as code, so ignore case for non linux platforms
 	// Resource can be from another platform. Lowering the case as an hack. Should come from File system provider
 	return resource && resource.scheme === Schemas.file ? !isLinux : true;
@@ -45,7 +45,7 @@ function isEqualAuthority(a1: string, a2: string, ignoreCase?: boolean) {
 	return a1 === a2 || ignoreCase && a1 && a2 && equalsIgnoreCase(a1, a2);
 }
 
-export function isEqual(first: URI, second: URI, ignoreCase = hasToIgnoreCase(first)): boolean {
+export function isEqual(first: URI | undefined, second: URI | undefined, ignoreCase = hasToIgnoreCase(first)): boolean {
 	const identityEquals = (first === second);
 	if (identityEquals) {
 		return true;
@@ -73,6 +73,9 @@ export function basename(resource: URI): string {
  * @returns The URI representing the directory of the input URI.
  */
 export function dirname(resource: URI): URI | null {
+	if (resource.path.length === 0) {
+		return resource;
+	}
 	if (resource.scheme === Schemas.file) {
 		return URI.file(paths.dirname(fsPath(resource)));
 	}
@@ -111,6 +114,9 @@ export function joinPath(resource: URI, pathFragment: string): URI {
  * @returns The URI with the normalized path.
  */
 export function normalizePath(resource: URI): URI {
+	if (!resource.path.length) {
+		return resource;
+	}
 	let normalizedPath: string;
 	if (resource.scheme === Schemas.file) {
 		normalizedPath = URI.file(paths.normalize(fsPath(resource))).path;
@@ -128,19 +134,20 @@ export function normalizePath(resource: URI): URI {
  */
 export function fsPath(uri: URI): string {
 	let value: string;
-	if (uri.authority && uri.path.length > 1 && uri.scheme === 'file') {
+	const uriPath = uri.path;
+	if (uri.authority && uriPath.length > 1 && uri.scheme === 'file') {
 		// unc path: file://shares/c$/far/boo
-		value = `//${uri.authority}${uri.path}`;
+		value = `//${uri.authority}${uriPath}`;
 	} else if (
 		isWindows
-		&& uri.path.charCodeAt(0) === CharCode.Slash
-		&& (uri.path.charCodeAt(1) >= CharCode.A && uri.path.charCodeAt(1) <= CharCode.Z || uri.path.charCodeAt(1) >= CharCode.a && uri.path.charCodeAt(1) <= CharCode.z)
-		&& uri.path.charCodeAt(2) === CharCode.Colon
+		&& uriPath.charCodeAt(0) === CharCode.Slash
+		&& paths.isWindowsDriveLetter(uriPath.charCodeAt(1))
+		&& uriPath.charCodeAt(2) === CharCode.Colon
 	) {
-		value = uri.path.substr(1);
+		value = uriPath.substr(1);
 	} else {
 		// other path
-		value = uri.path;
+		value = uriPath;
 	}
 	if (isWindows) {
 		value = value.replace(/\//g, '\\');
@@ -186,7 +193,7 @@ export function isMalformedFileUri(candidate: URI): URI | undefined {
 	if (!candidate.scheme || isWindows && candidate.scheme.match(/^[a-zA-Z]$/)) {
 		return URI.file((candidate.scheme ? candidate.scheme + ':' : '') + candidate.path);
 	}
-	return void 0;
+	return undefined;
 }
 
 
